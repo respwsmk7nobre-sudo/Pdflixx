@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>PDflix — Catálogo & Entretenimento</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-main: #08080a;
+      --bg-surface: #121217;
+      --bg-card: #181820;
+      --bg-card-hover: #22222d;
+      --purple-glow: rgba(124, 58, 237, 0.4);
+      --purple-accent: #7c3aed;
+      --purple-light: #a78bfa;
+      --purple-dark: #5b21b6;
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --border-subtle: #272732;
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --transition: all 0.25s ease-in-out;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-family);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 70px;
+      background: linear-gradient(180deg, rgba(8,8,10,0.98) 0%, rgba(8,8,10,0.85) 70%, transparent 100%);
+      backdrop-filter: blur(12px);
+      z-index: 1000;
+    }
+
+    .nav-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      height: 100%;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-left, .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .brand-logo {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .logo-accent {
+      color: var(--purple-accent);
+      text-shadow: 0 0 16px var(--purple-glow);
+    }
+
+    .nav-links { display: flex; gap: 8px; }
+
+    .nav-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .nav-btn:hover, .nav-btn.active {
+      color: #ffffff;
+      background-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-btn.active {
+      border-bottom: 2px solid var(--purple-accent);
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: 30px;
+      padding: 6px 14px;
+      transition: var(--transition);
+    }
+
+    .search-box:focus-within {
+      border-color: var(--purple-accent);
+      box-shadow: 0 0 12px var(--purple-glow);
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.88rem;
+      width: 170px;
+      margin-left: 8px;
+    }
+
+    .clear-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-primary { background-color: #ffffff; color: #000000; }
+    .btn-primary:hover { background-color: rgba(255,255,255,0.85); transform: translateY(-2px); }
+
+    .btn-secondary { background-color: rgba(255, 255, 255, 0.15); color: #ffffff; backdrop-filter: blur(8px); }
+    .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.25); transform: translateY(-2px); }
+
+    .btn-purple { background-color: var(--purple-accent); color: #ffffff; }
+    .btn-purple:hover { background-color: var(--purple-dark); box-shadow: 0 0 15px var(--purple-glow); }
+
+    .btn-icon { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.12); color: #fff; }
+    .btn-icon:hover { background: rgba(255,255,255,0.25); }
+
+    .btn-block { width: 100%; }
+
+    .hero-section {
+      position: relative;
+      min-height: 75vh;
+      display: flex;
+      align-items: center;
+      padding: 130px 50px 60px;
+      background-color: #0c0c10;
+    }
+
+    .hero-backdrop {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center top;
+      filter: brightness(0.55);
+      z-index: 1;
+      transition: background-image 0.4s ease-in-out;
+    }
+
+    .hero-gradient-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, var(--bg-main) 12%, transparent 65%),
+                  linear-gradient(90deg, var(--bg-main) 18%, rgba(8,8,10,0.7) 60%, transparent 100%);
+      z-index: 2;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 3;
+      max-width: 650px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: var(--purple-light);
+      margin-bottom: 12px;
+    }
+
+    .badge-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background-color: var(--purple-accent);
+      box-shadow: 0 0 8px var(--purple-light);
+    }
+
+    .hero-title {
+      font-size: 3.4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 14px;
+      color: #ffffff;
+      text-shadow: 0 3px 14px rgba(0,0,0,0.9);
+    }
+
+    .hero-overview {
+      font-size: 1rem;
+      color: #d1d5db;
+      line-height: 1.6;
+      margin-bottom: 20px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .hero-meta { display: flex; gap: 10px; margin-bottom: 24px; }
+
+    .meta-tag {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .meta-tag.rating { color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+
+    .hero-actions { display: flex; align-items: center; gap: 14px; }
+
+    .filter-bar {
+      max-width: 1400px;
+      margin: -20px auto 30px;
+      padding: 0 24px;
+      position: relative;
+      z-index: 4;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .filter-group label { font-size: 0.85rem; color: var(--text-muted); }
+    .filter-group select {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 0.88rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .catalog-container { max-width: 1400px; margin: 0 auto; padding: 0 24px 60px; }
+    .carousel-section { margin-bottom: 45px; }
+
+    .section-heading {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 18px;
+      overflow-x: auto;
+      padding: 8px 4px 16px;
+      scroll-behavior: smooth;
+    }
+
+    .carousel-track::-webkit-scrollbar { height: 6px; }
+    .carousel-track::-webkit-scrollbar-thumb { background: var(--purple-accent); border-radius: 4px; }
+
+    .media-card {
+      flex: 0 0 190px;
+      background: var(--bg-card);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+
+    .media-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      border-color: var(--purple-accent);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.6), 0 0 14px var(--purple-glow);
+    }
+
+    .poster-wrapper {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 2 / 3;
+      background-color: #1a1a24;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .poster-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .badge-pdflix-tag {
+      position: absolute;
+      top: 8px; left: 8px;
+      background: rgba(8, 8, 10, 0.85);
+      border: 1px solid rgba(124, 58, 237, 0.5);
+      backdrop-filter: blur(4px);
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .badge-play-ready {
+      position: absolute;
+      top: 8px; right: 8px;
+      background: var(--purple-accent);
+      color: #fff;
+      border-radius: 50%;
+      width: 26px; height: 26px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px var(--purple-glow);
+      font-size: 0.75rem;
+    }
+
+    .card-meta { padding: 10px; }
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .card-sub {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .grid-layout {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 20px;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-sm { max-width: 420px; padding: 32px; }
+    .modal-lg { max-width: 850px; }
+
+    .modal-close {
+      position: absolute;
+      top: 14px; right: 18px;
+      background: rgba(0,0,0,0.6);
+      border: none;
+      color: #fff;
+      font-size: 1.6rem;
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .details-hero {
+      position: relative;
+      min-height: 280px;
+      background-size: cover;
+      background-position: center;
+      padding: 30px;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .details-hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(0deg, var(--bg-card) 5%, rgba(24, 24, 32, 0.65) 60%, rgba(0,0,0,0.85) 100%);
+    }
+
+    .details-hero-body {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+    }
+
+    .details-poster {
+      width: 130px;
+      aspect-ratio: 2/3;
+      border-radius: var(--radius-sm);
+      border: 2px solid rgba(255,255,255,0.2);
+      object-fit: cover;
+      background-color: #1a1a24;
+    }
+
+    .details-body { padding: 24px 30px; }
+    .details-synopsis { color: #d1d5db; margin: 10px 0 24px; font-size: 0.95rem; }
+
+    .player-overlay {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      z-index: 3000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .player-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: rgba(0,0,0,0.85);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .btn-close-player {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      color: #fff;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      transition: var(--transition);
+    }
+
+    .btn-close-player:hover {
+      background: var(--purple-accent);
+    }
+
+    .player-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      position: relative;
+    }
+
+    .player-container video {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 75px);
+      outline: none;
+    }
+
+    .admin-panel { max-width: 1100px; margin: 100px auto 60px; padding: 0 24px; }
+    .admin-header h2 { font-size: 1.8rem; display: flex; align-items: center; gap: 10px; }
+    .admin-tabs { display: flex; gap: 12px; margin: 24px 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 8px; }
+
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1rem; padding: 8px 16px; cursor: pointer; }
+    .tab-btn.active { color: var(--purple-light); border-bottom: 2px solid var(--purple-accent); }
+
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      outline: none;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color: var(--purple-accent); }
+
+    .admin-table { width: 100%; border-collapse: collapse; }
+    .admin-table th, .admin-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-subtle); }
+    .admin-table img { width: 40px; height: 60px; object-fit: cover; border-radius: 4px; }
+
+    .footer {
+      background-color: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      padding: 48px 24px 24px;
+      margin-top: 60px;
+    }
+
+    .footer-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      gap: 40px;
+    }
+
+    .footer-brand p { color: var(--text-muted); font-size: 0.85rem; margin-top: 12px; line-height: 1.6; max-width: 400px; }
+    .footer-links h4 { font-size: 0.95rem; margin-bottom: 14px; color: #fff; }
+    .footer-links a, .footer-links span { display: block; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 8px; }
+    .footer-bottom { max-width: 1400px; margin: 36px auto 0; padding-top: 20px; border-top: 1px solid var(--border-subtle); text-align: center; font-size: 0.8rem; color: var(--text-muted); }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 768px) {
+      .hero-section { padding: 100px 20px 30px; min-height: 65vh; }
+      .hero-title { font-size: 2.2rem; }
+      .nav-links { display: none; }
+      .search-box input { width: 100px; }
+      .footer-container { grid-template-columns: 1fr; gap: 24px; }
+      .details-hero-body { flex-direction: column; align-items: center; text-align: center; }
+      .media-card { flex: 0 0 140px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="nav-left">
+        <div class="brand-logo" onclick="navigateTo('home')">
+          <span class="logo-accent">PD</span>flix
+        </div>
+        <nav class="nav-links">
+          <button class="nav-btn active" onclick="navigateTo('home')">Início</button>
+          <button class="nav-btn" onclick="filterCatalogType('movie')">Filmes</button>
+          <button class="nav-btn" onclick="filterCatalogType('tv')">Séries</button>
+          <button class="nav-btn" onclick="navigateTo('mylist')">Minha Lista</button>
+          <button class="nav-btn admin-only hidden" id="adminNavBtn" onclick="navigateTo('admin')">Painel Admin</button>
+        </nav>
+      </div>
+
+      <div class="nav-right">
+        <div class="search-box">
+          <span style="color:var(--text-muted); font-size:0.9rem;">🔍</span>
+          <input type="text" id="globalSearch" placeholder="Pesquisar..." autocomplete="off">
+          <button id="clearSearch" class="clear-btn hidden">&times;</button>
+        </div>
+        <div class="auth-box" id="authBox">
+          <button class="btn btn-purple" onclick="openAuthModal('login')">Entrar</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main id="appContent">
+
+    <section class="hero-section" id="heroBanner">
+      <div class="hero-backdrop" id="heroBackdrop"></div>
+      <div class="hero-gradient-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge"><span class="badge-dot"></span> DESTAQUE EXCLUSIVO</div>
+        <h1 class="hero-title" id="heroTitle">Tears of Steel</h1>
+        <p class="hero-overview" id="heroOverview">Em um futuro distópico, um grupo de cientistas tenta salvar o mundo através de memórias cruciais passadas em Amsterdã.</p>
+        <div class="hero-meta">
+          <span class="meta-tag rating" id="heroRating">★ 7.9</span>
+          <span class="meta-tag" id="heroYear">2024</span>
+          <span class="meta-tag" id="heroType">Filme</span>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" id="heroPlayBtn" onclick="playCurrentHero()">
+            ▶ Assistir Agora
+          </button>
+          <button class="btn btn-secondary" onclick="openHeroDetails()">
+            ℹ Mais Detalhes
+          </button>
+          <button class="btn btn-icon" onclick="toggleHeroFavorite()" title="Salvar">
+            ＋
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="filter-bar">
+      <div class="filter-group">
+        <label for="genreFilter">Gênero:</label>
+        <select id="genreFilter" onchange="applyFilters()">
+          <option value="all">Todos os Gêneros</option>
+          <option value="Ação">Ação</option>
+          <option value="Ficção científica">Ficção Científica</option>
+          <option value="Animação">Animação</option>
+          <option value="Drama">Drama</option>
+          <option value="Comédia">Comédia</option>
+          <option value="Documentário">Documentário</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="yearFilter">Ano:</label>
+        <select id="yearFilter" onchange="applyFilters()">
+          <option value="all">Todos os Anos</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+          <option value="classic">Clássicos</option>
+        </select>
+      </div>
+
+      <div class="filter-group">
+        <label for="sortFilter">Ordenar:</label>
+        <select id="sortFilter" onchange="applyFilters()">
+          <option value="popular">Mais Populares</option>
+          <option value="rating">Melhor Avaliados</option>
+          <option value="recent">Lançamentos Recentes</option>
+        </select>
+      </div>
+    </section>
+
+    <div class="catalog-container" id="catalogSections">
+      
+      <section class="carousel-section hidden" id="secMyList">
+        <h2 class="section-heading">📑 Minha Lista</h2>
+        <div class="carousel-track" id="trackMyList"></div>
+      </section>
+
+      <section class="carousel-section" id="secAvailable">
+        <h2 class="section-heading">▶ Disponíveis para Reprodução</h2>
+        <div class="carousel-track" id="trackAvailable"></div>
+      </section>
+
+      <section class="carousel-section" id="secMovies">
+        <h2 class="section-heading">🎬 Filmes Populares</h2>
+        <div class="carousel-track" id="trackMovies"></div>
+      </section>
+
+      <section class="carousel-section" id="secSeries">
+        <h2 class="section-heading">📺 Séries em Destaque</h2>
+        <div class="carousel-track" id="trackSeries"></div>
+      </section>
+
+      <section class="carousel-section" id="secAll">
+        <h2 class="section-heading">🗂 Catálogo Completo</h2>
+        <div class="grid-layout" id="trackAll"></div>
+      </section>
+
+    </div>
+
+    <!-- PAINEL ADMIN COM SUPABASE REAL -->
+    <section class="admin-panel hidden" id="adminView">
+      <div class="admin-header">
+        <h2>🛡 Painel de Gerenciamento PDflix</h2>
+        <p>Cadastre títulos e links de vídeos. Tudo é sincronizado na nuvem para todos os usuários!</p>
+      </div>
+
+      <div class="admin-tabs">
+        <button class="tab-btn active" onclick="switchAdminTab('add')">Adicionar Novo Título</button>
+        <button class="tab-btn" onclick="switchAdminTab('list')">Gerenciar Acervo</button>
+      </div>
+
+      <div class="admin-tab-content" id="tabAddTitle">
+        <form id="addTitleForm" onsubmit="handleCreateTitle(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tipo:</label>
+              <select id="admType">
+                <option value="movie">Filme</option>
+                <option value="tv">Série</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Título:</label>
+              <input type="text" id="admTitle" placeholder="Ex: Elephants Dream" required>
+            </div>
+            <div class="form-group">
+              <label>Ano:</label>
+              <input type="number" id="admYear" value="2024" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Gêneros (separados por vírgula):</label>
+              <input type="text" id="admGenres" placeholder="Animação, Ficção científica" required>
+            </div>
+            <div class="form-group">
+              <label>Avaliação (0.0 a 10.0):</label>
+              <input type="number" step="0.1" id="admRating" value="8.0" required>
+            </div>
+            <div class="form-group">
+              <label>Duração:</label>
+              <input type="text" id="admDuration" placeholder="11 min" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Sinopse:</label>
+            <textarea id="admOverview" rows="3" required></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>URL do Cartaz (Poster vertical):</label>
+              <input type="url" id="admPosterUrl" required>
+            </div>
+            <div class="form-group">
+              <label>URL da Imagem de Fundo (Backdrop horizontal):</label>
+              <input type="url" id="admBackdropUrl" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Disponibilidade:</label>
+              <select id="admIsAvailable">
+                <option value="true">Disponível no Player Integrado</option>
+                <option value="false">Apenas Informativo</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>URL do Vídeo Autorizado (MP4 / WebM):</label>
+              <input type="url" id="admStreamUrl">
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-purple btn-block">Salvar no Banco de Dados na Nuvem</button>
+        </form>
+      </div>
+
+      <div class="admin-tab-content hidden" id="tabManageList">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Capa</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="adminTitlesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="modal-overlay hidden" id="detailsModal">
+    <div class="modal-card modal-lg">
+      <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+      
+      <div class="details-hero" id="modalBackdrop">
+        <div class="details-hero-overlay"></div>
+        <div class="details-hero-body">
+          <img src="" alt="Capa" class="details-poster" id="modalPoster" referrerpolicy="no-referrer">
+          <div class="details-info">
+            <h2 id="modalTitle">Título</h2>
+            <div class="hero-meta" style="margin: 8px 0;">
+              <span class="meta-tag rating" id="modalRating">★ 0.0</span>
+              <span class="meta-tag" id="modalYear">2026</span>
+              <span class="meta-tag" id="modalDuration">120m</span>
+              <span class="meta-tag" id="modalStatus">Disponível</span>
+            </div>
+            <p id="modalGenres" style="color:var(--purple-light); font-size:0.85rem; margin-bottom:12px;"></p>
+            <div class="hero-actions">
+              <button class="btn btn-primary" id="modalPlayBtn">▶ Assistir</button>
+              <button class="btn btn-secondary" id="modalFavBtn">＋ Minha Lista</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="details-body">
+        <h3>Sinopse</h3>
+        <p id="modalOverview" class="details-synopsis"></p>
+
+        <div class="similar-section" style="margin-top:20px;">
+          <h3 style="margin-bottom:12px;">Títulos Semelhantes</h3>
+          <div class="carousel-track" id="modalSimilarTrack"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="player-overlay hidden" id="videoPlayerOverlay">
+    <div class="player-topbar">
+      <div style="font-weight:700; color:#fff;" id="playerMediaTitle">PDflix Player</div>
+      <button class="btn-close-player" onclick="closePlayer()">✕ Sair do Player</button>
+    </div>
+    <div class="player-container">
+      <video id="pdflixVideoPlayer" controls playsinline autoplay preload="auto">
+        Seu navegador não suporta este vídeo.
+      </video>
+    </div>
+  </div>
+
+  <div class="modal-overlay hidden" id="authModal">
+    <div class="modal-card modal-sm">
+      <button class="modal-close" onclick="closeModal('authModal')">&times;</button>
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2><span class="logo-accent">PD</span>flix</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem;" id="authModalSubtitle">Acesse sua conta</p>
+      </div>
+
+      <form id="authForm" onsubmit="handleAuthSubmit(event)">
+        <div class="form-group" id="nameGroup">
+          <label>Seu Nome</label>
+          <input type="text" id="authName" placeholder="Alex">
+        </div>
+        <div class="form-group">
+          <label>E-mail</label>
+          <input type="email" id="authEmail" placeholder="seu@email.com" required>
+        </div>
+        <div class="form-group">
+          <label>Senha</label>
+          <input type="password" id="authPassword" placeholder="••••••••" required minlength="6">
+        </div>
+
+        <div id="authAlert" style="margin-bottom:12px; font-size:0.85rem;" class="hidden"></div>
+        <button type="submit" class="btn btn-purple btn-block" id="authSubmitBtn">Entrar</button>
+      </form>
+
+      <div style="text-align:center; margin-top:16px; font-size:0.85rem;">
+        <p id="authToggleText">Ainda não tem conta? <a href="#" onclick="toggleAuthMode(event)" style="color:var(--purple-light)">Cadastre-se grátis</a></p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-container">
+      <div class="footer-brand">
+        <span class="brand-logo"><span class="logo-accent">PD</span>flix</span>
+        <p>Catálogo moderno e reprodutor de mídias de domínio público e Creative Commons autorizadas.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Navegação</h4>
+        <a href="#" onclick="navigateTo('home')">Início</a>
+        <a href="#" onclick="filterCatalogType('movie')">Filmes</a>
+        <a href="#" onclick="filterCatalogType('tv')">Séries</a>
+      </div>
+      <div class="footer-links">
+        <h4>Privacidade</h4>
+        <span>Termos de Uso</span>
+        <span>Acesso Seguro</span>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 PDflix. Plataforma minimalista e responsiva.</p>
+    </div>
+  </footer>
+
+  <script>
+    // CREDENCIAIS REAIS DO SEU SUPABASE CONFIGURADAS
+    const SUPABASE_URL = "https://dembgkdojgkzlgptuagq.supabase.co"; 
+    const SUPABASE_ANON_KEY = "sb_publishable_zxy78bPnagTS2lHhmpTUXg_SxfFUqD-"; 
+
+    let supabase = null;
+    if (typeof window.supabase !== 'undefined') {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+
+    const SAFE_FALLBACK_POSTER = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=600&auto=format&fit=crop&q=80";
+
+    const DEFAULT_CATALOG = [
+      {
+        id: "def-01",
+        type: "movie",
+        title: "Tears of Steel",
+        overview: "Em um futuro distópico, um grupo de cientistas e soldados rebeldes tenta salvar o mundo através de memórias cruciais passadas em Amsterdã.",
+        release_year: 2024,
+        genres: ["Ficção científica", "Ação"],
+        rating: 7.9,
+        duration: "12 min",
+        poster_url: "https://upload.wikimedia.org/wikipedia/commons/0/0c/Tears_of_Steel_poster.jpg",
+        backdrop_url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&auto=format&fit=crop&q=80",
+        is_available: true,
+        stream_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4"
+      },
+      {
+        id: "def-02",
+        type: "movie",
+        title: "Big Buck Bunny",
+        overview: "Um coelho gigante de coração bom decide dar uma lição inesquecível em três roedores valentões da floresta.",
+        release_year: 2025,
+        genres: ["Animação", "Comédia"],
+        rating: 8.4,
+        duration: "10 min",
+        poster_url: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Big_buck_bunny_poster_big.jpg",
+        backdrop_url: "https://images.unsplash.com/photo-1511447333015-45b65e60f6d5?w=1600&auto=format&fit=crop&q=80",
+        is_available: true,
+        stream_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+      },
+      {
+        id: "def-03",
+        type: "movie",
+        title: "Sintel — A Guardiã",
+        overview: "Uma jovem solitária resgata um pequeno filhote de dragão ferido e forma um vínculo inabalável até que ele é capturado por guerreiros.",
+        release_year: 2024,
+        genres: ["Animação", "Drama", "Ação"],
+        rating: 8.8,
+        duration: "15 min",
+        poster_url: "https://upload.wikimedia.org/wikipedia/commons/8/8f/Sintel_poster.jpg",
+        backdrop_url: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1600&auto=format&fit=crop&q=80",
+        is_available: true,
+        stream_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4"
+      },
+      {
+        id: "def-04",
+        type: "tv",
+        title: "Cosmos & Fronteiras",
+        overview: "Série documental sobre a exploração das fronteiras do espaço profundo e da astrofísica moderna.",
+        release_year: 2026,
+        genres: ["Documentário", "Ficção científica"],
+        rating: 9.1,
+        duration: "1 Temporada",
+        poster_url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&auto=format&fit=crop&q=80",
+        backdrop_url: "https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1600&auto=format&fit=crop&q=80",
+        is_available: true,
+        stream_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
+      },
+      {
+        id: "def-05",
+        type: "movie",
+        title: "Interestelar (Informativo)",
+        overview: "As reservas da Terra estão no fim e um grupo de astronautas recebe a missão de verificar novos mundos habitáveis.",
+        release_year: 2014,
+        genres: ["Ficção científica", "Drama"],
+        rating: 9.3,
+        duration: "2h 49m",
+        poster_url: "https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=600&auto=format&fit=crop&q=80",
+        backdrop_url: "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1600&auto=format&fit=crop&q=80",
+        is_available: false,
+        stream_url: null
+      }
+    ];
+
+    function safeGet(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+    function safeSet(k, v) { try { localStorage.setItem(k, v); } catch(e) {} }
+
+    let appState = {
+      currentUser: null,
+      userProfile: null,
+      catalog: [...DEFAULT_CATALOG],
+      myList: [],
+      currentHero: DEFAULT_CATALOG[0],
+      activeFilterType: 'all',
+      activeGenre: 'all',
+      activeYear: 'all',
+      activeSort: 'popular',
+      searchQuery: ''
+    };
+
+    // CARREGA DO BANCO DE DADOS NA NUVEM (SUPABASE)
+    async function loadCatalogFromCloud() {
+      let loadedFromCloud = false;
+      if (supabase) {
+        try {
+          const { data, error } = await supabase.from('titles').select('*').order('created_at', { ascending: false });
+          if (!error && data && data.length > 0) {
+            const dbTitles = data.map(item => ({
+              ...item,
+              genres: Array.isArray(item.genres) ? item.genres : (item.genres ? item.genres.split(',').map(s => s.trim()) : [])
+            }));
+            
+            const existingNames = new Set(dbTitles.map(t => t.title.toLowerCase()));
+            const uniqueDefaults = DEFAULT_CATALOG.filter(d => !existingNames.has(d.title.toLowerCase()));
+            appState.catalog = [...dbTitles, ...uniqueDefaults];
+            loadedFromCloud = true;
+          }
+        } catch (err) {
+          console.warn("Supabase temporariamente offline:", err);
+        }
+      }
+
+      if (!loadedFromCloud) {
+        const saved = safeGet("pdflix_saved_catalog");
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              appState.catalog = [...parsed, ...DEFAULT_CATALOG];
+            }
+          } catch(e) {}
+        }
+      }
+
+      appState.currentHero = appState.catalog[0];
+      renderApp();
+    }
+
+    function initAuthSession() {
+      const cached = safeGet("pdflix_user");
+      if (cached) {
+        try {
+          appState.currentUser = JSON.parse(cached);
+          appState.userProfile = { role: appState.currentUser.role || 'user', name: appState.currentUser.name };
+        } catch(e) {}
+      }
+      const cachedFavs = safeGet("pdflix_favs");
+      if (cachedFavs) {
+        try { appState.myList = JSON.parse(cachedFavs); } catch(e) {}
+      }
+      renderAuthNav();
+    }
+
+    function renderAuthNav() {
+      const authBox = document.getElementById("authBox");
+      const adminNavBtn = document.getElementById('adminNavBtn');
+      if (appState.currentUser) {
+        const isAdmin = appState.userProfile?.role === 'admin';
+        authBox.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-size:0.85rem; color:#a78bfa;">${appState.currentUser.name}</span>
+            <button class="btn btn-secondary" style="padding:6px 12px; font-size:0.8rem;" onclick="handleLogout()">Sair</button>
+          </div>
+        `;
+        if (isAdmin && adminNavBtn) adminNavBtn.classList.remove('hidden');
+      } else {
+        authBox.innerHTML = `<button class="btn btn-purple" onclick="openAuthModal('login')">Entrar</button>`;
+        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+      }
+    }
+
+    let authMode = 'login';
+    function openAuthModal(mode) {
+      authMode = mode;
+      const modal = document.getElementById("authModal");
+      const nameGroup = document.getElementById("nameGroup");
+      const submitBtn = document.getElementById("authSubmitBtn");
+      document.getElementById("authAlert").classList.add("hidden");
+
+      if (mode === 'login') {
+        nameGroup.classList.add("hidden");
+        submitBtn.textContent = "Acessar Conta";
+      } else {
+        nameGroup.classList.remove("hidden");
+        submitBtn.textContent = "Criar Minha Conta";
+      }
+      modal.classList.remove("hidden");
+    }
+
+    function toggleAuthMode(e) {
+      e.preventDefault();
+      openAuthModal(authMode === 'login' ? 'register' : 'login');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById("authEmail").value.trim();
+      const name = document.getElementById("authName").value.trim() || email.split('@')[0];
+      const dummyUser = { id: "user-" + Date.now(), email, name, role: email.toLowerCase().includes("admin") ? "admin" : "user" };
+
+      safeSet("pdflix_user", JSON.stringify(dummyUser));
+      appState.currentUser = dummyUser;
+      appState.userProfile = { role: dummyUser.role, name: dummyUser.name };
+      closeModal("authModal");
+      renderAuthNav();
+      renderApp();
+    }
+
+    function handleLogout() {
+      try { localStorage.removeItem("pdflix_user"); } catch(e) {}
+      appState.currentUser = null;
+      appState.userProfile = null;
+      renderAuthNav();
+      renderApp();
+    }
+
+    function renderApp() {
+      renderHero();
+      renderSections();
+    }
+
+    function renderHero() {
+      const hero = appState.currentHero;
+      if (!hero) return;
+      document.getElementById("heroBackdrop").style.backgroundImage = `url('${hero.backdrop_url || hero.poster_url}')`;
+      document.getElementById("heroTitle").textContent = hero.title;
+      document.getElementById("heroOverview").textContent = hero.overview;
+      document.getElementById("heroRating").textContent = `★ ${hero.rating}`;
+      document.getElementById("heroYear").textContent = hero.release_year;
+      document.getElementById("heroType").textContent = hero.type === 'tv' ? 'Série' : 'Filme';
+    }
+
+    function renderSections() {
+      const movies = appState.catalog.filter(i => i.type === 'movie');
+      const series = appState.catalog.filter(i => i.type === 'tv');
+      const available = appState.catalog.filter(i => i.is_available);
+      const myFavorites = appState.catalog.filter(i => appState.myList.includes(i.id));
+
+      const secMyList = document.getElementById("secMyList");
+      if (myFavorites.length > 0) {
+        secMyList.classList.remove("hidden");
+        document.getElementById("trackMyList").innerHTML = myFavorites.map(createCardHTML).join("");
+      } else {
+        secMyList.classList.add("hidden");
+      }
+
+      document.getElementById("trackAvailable").innerHTML = available.map(createCardHTML).join("");
+      document.getElementById("trackMovies").innerHTML = movies.map(createCardHTML).join("");
+      document.getElementById("trackSeries").innerHTML = series.map(createCardHTML).join("");
+      renderFilteredGrid();
+    }
+
+    function createCardHTML(title) {
+      const isPlayable = title.is_available && title.stream_url;
+      return `
+        <div class="media-card" onclick="openDetailsModal('${title.id}')">
+          <div class="poster-wrapper">
+            <img src="${title.poster_url}" alt="${title.title}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${SAFE_FALLBACK_POSTER}';">
+            <span class="badge-pdflix-tag">PDFLIX</span>
+            ${isPlayable ? `<div class="badge-play-ready">▶</div>` : ''}
+          </div>
+          <div class="card-meta">
+            <h4 class="card-title">${title.title}</h4>
+            <div class="card-sub">
+              <span>${title.release_year}</span>
+              <span style="color:#fbbf24;">★ ${title.rating}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFilteredGrid() {
+      let filtered = [...appState.catalog];
+      if (appState.activeFilterType !== 'all') filtered = filtered.filter(i => i.type === appState.activeFilterType);
+      if (appState.activeGenre !== 'all') filtered = filtered.filter(i => i.genres?.some(g => g.toLowerCase().includes(appState.activeGenre.toLowerCase())));
+      if (appState.activeYear !== 'all') {
+        if (appState.activeYear === 'classic') filtered = filtered.filter(i => i.release_year < 2024);
+        else filtered = filtered.filter(i => i.release_year === parseInt(appState.activeYear));
+      }
+      if (appState.searchQuery.trim().length > 0) {
+        const q = appState.searchQuery.toLowerCase();
+        filtered = filtered.filter(i => i.title.toLowerCase().includes(q) || i.overview?.toLowerCase().includes(q));
+      }
+      if (appState.activeSort === 'rating') filtered.sort((a,b) => b.rating - a.rating);
+      if (appState.activeSort === 'recent') filtered.sort((a,b) => b.release_year - a.release_year);
+
+      document.getElementById("trackAll").innerHTML = filtered.map(createCardHTML).join("");
+    }
+
+    function setupSearchInput() {
+      const input = document.getElementById("globalSearch");
+      const clear = document.getElementById("clearSearch");
+      if (!input || !clear) return;
+      input.addEventListener("input", (e) => {
+        appState.searchQuery = e.target.value;
+        clear.classList.toggle("hidden", e.target.value.length === 0);
+        renderFilteredGrid();
+      });
+      clear.addEventListener("click", () => {
+        input.value = "";
+        appState.searchQuery = "";
+        clear.classList.add("hidden");
+        renderFilteredGrid();
+      });
+    }
+
+    function applyFilters() {
+      appState.activeGenre = document.getElementById("genreFilter").value;
+      appState.activeYear = document.getElementById("yearFilter").value;
+      appState.activeSort = document.getElementById("sortFilter").value;
+      renderFilteredGrid();
+    }
+
+    function filterCatalogType(type) {
+      appState.activeFilterType = type;
+      renderFilteredGrid();
+    }
+
+    function navigateTo(route) {
+      const adminView = document.getElementById("adminView");
+      const heroBanner = document.getElementById("heroBanner");
+      const catalogSections = document.getElementById("catalogSections");
+
+      if (route === 'admin') {
+        adminView.classList.remove("hidden");
+        heroBanner.classList.add("hidden");
+        catalogSections.classList.add("hidden");
+        loadAdminTable();
+      } else {
+        adminView.classList.add("hidden");
+        heroBanner.classList.remove("hidden");
+        catalogSections.classList.remove("hidden");
+        appState.activeFilterType = 'all';
+        renderFilteredGrid();
+      }
+    }
+
+    function openDetailsModal(id) {
+      const item = appState.catalog.find(i => i.id === id);
+      if (!item) return;
+
+      document.getElementById("modalBackdrop").style.backgroundImage = `url('${item.backdrop_url || item.poster_url}')`;
+      document.getElementById("modalPoster").src = item.poster_url;
+      document.getElementById("modalTitle").textContent = item.title;
+      document.getElementById("modalRating").textContent = `★ ${item.rating}`;
+      document.getElementById("modalYear").textContent = item.release_year;
+      document.getElementById("modalDuration").textContent = item.duration;
+      document.getElementById("modalGenres").textContent = item.genres?.join(" • ");
+      document.getElementById("modalOverview").textContent = item.overview;
+
+      const playBtn = document.getElementById("modalPlayBtn");
+      if (item.is_available && item.stream_url) {
+        playBtn.classList.remove("hidden");
+        playBtn.onclick = () => { closeModal("detailsModal"); playVideo(item.title, item.stream_url); };
+      } else {
+        playBtn.classList.add("hidden");
+      }
+
+      const favBtn = document.getElementById("modalFavBtn");
+      const isFav = appState.myList.includes(item.id);
+      favBtn.textContent = isFav ? "✓ Na Lista" : "＋ Minha Lista";
+      favBtn.onclick = () => toggleFavorite(item.id);
+
+      const similar = appState.catalog.filter(c => c.id !== item.id).slice(0, 4);
+      document.getElementById("modalSimilarTrack").innerHTML = similar.map(createCardHTML).join("");
+
+      document.getElementById("detailsModal").classList.remove("hidden");
+    }
+
+    function toggleFavorite(id) {
+      const idx = appState.myList.indexOf(id);
+      if (idx > -1) appState.myList.splice(idx, 1);
+      else appState.myList.push(id);
+      safeSet("pdflix_favs", JSON.stringify(appState.myList));
+      renderSections();
+      openDetailsModal(id);
+    }
+
+    function playVideo(title, url) {
+      if (!url) {
+        alert("Este título possui caráter informativo e não possui vídeo para reprodução.");
+        return;
+      }
+
+      const overlay = document.getElementById("videoPlayerOverlay");
+      const v = document.getElementById("pdflixVideoPlayer");
+      const titleDisplay = document.getElementById("playerMediaTitle");
+
+      titleDisplay.textContent = `PDflix — ${title}`;
+      overlay.classList.remove("hidden");
+
+      v.pause();
+      v.src = url;
+      v.load();
+
+      const playPromise = v.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          console.log("Clique no play para iniciar.");
+        });
+      }
+
+      v.onerror = function() {
+        alert("Não foi possível carregar o vídeo. Verifique sua conexão com a internet.");
+      };
+    }
+
+    function closePlayer() {
+      const v = document.getElementById("pdflixVideoPlayer");
+      v.pause();
+      v.removeAttribute("src");
+      document.getElementById("videoPlayerOverlay").classList.add("hidden");
+    }
+
+    function playCurrentHero() {
+      if (appState.currentHero?.is_available) {
+        playVideo(appState.currentHero.title, appState.currentHero.stream_url);
+      } else {
+        openHeroDetails();
+      }
+    }
+
+    function openHeroDetails() {
+      if (appState.currentHero) openDetailsModal(appState.currentHero.id);
+    }
+
+    function toggleHeroFavorite() {
+      if (appState.currentHero) toggleFavorite(appState.currentHero.id);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add("hidden");
+    }
+
+    function switchAdminTab(t) {
+      document.getElementById("tabAddTitle").classList.toggle("hidden", t !== 'add');
+      document.getElementById("tabManageList").classList.toggle("hidden", t !== 'list');
+      document.querySelectorAll(".tab-btn").forEach((b, i) => b.classList.toggle("active", (t==='add' && i===0) || (t==='list' && i===1)));
+      if (t === 'list') loadAdminTable();
+    }
+
+    // SALVA NO BANCO DE DADOS NA NUVEM (SUPABASE)
+    async function handleCreateTitle(e) {
+      e.preventDefault();
+      const newItem = {
+        type: document.getElementById("admType").value,
+        title: document.getElementById("admTitle").value.trim(),
+        release_year: parseInt(document.getElementById("admYear").value),
+        genres: document.getElementById("admGenres").value.split(",").map(g => g.trim()),
+        rating: parseFloat(document.getElementById("admRating").value),
+        duration: document.getElementById("admDuration").value.trim(),
+        overview: document.getElementById("admOverview").value.trim(),
+        poster_url: document.getElementById("admPosterUrl").value.trim(),
+        backdrop_url: document.getElementById("admBackdropUrl").value.trim(),
+        is_available: document.getElementById("admIsAvailable").value === "true",
+        stream_url: document.getElementById("admStreamUrl").value.trim() || null
+      };
+
+      let savedInCloud = false;
+      if (supabase) {
+        try {
+          const { data, error } = await supabase.from('titles').insert([newItem]).select();
+          if (!error && data && data.length > 0) {
+            appState.catalog.unshift(data[0]);
+            savedInCloud = true;
+          }
+        } catch(err) {
+          console.warn("Falha ao salvar na nuvem:", err);
+        }
+      }
+
+      if (!savedInCloud) {
+        newItem.id = "cust-" + Date.now();
+        appState.catalog.unshift(newItem);
+        const customOnly = appState.catalog.filter(i => String(i.id).startsWith("cust-"));
+        safeSet("pdflix_saved_catalog", JSON.stringify(customOnly));
+      }
+
+      alert("Filme salvo com sucesso na nuvem do Supabase! Qualquer pessoa que abrir o site já poderá assistir.");
+      document.getElementById("addTitleForm").reset();
+      renderApp();
+    }
+
+    async function loadAdminTable() {
+      document.getElementById("adminTitlesTableBody").innerHTML = appState.catalog.map(item => `
+        <tr>
+          <td><img src="${item.poster_url}" alt="poster" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='${SAFE_FALLBACK_POSTER}';"></td>
+          <td><strong>${item.title}</strong></td>
+          <td>${item.type === 'tv' ? 'Série' : 'Filme'}</td>
+          <td><span style="color:${item.is_available ? '#34d399' : '#9ca3af'}">${item.is_available ? 'Disponível' : 'Informativo'}</span></td>
+          <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:0.75rem;" onclick="deleteCatalogItem('${item.id}')">Excluir</button></td>
+        </tr>
+      `).join("");
+    }
+
+    async function deleteCatalogItem(id) {
+      if (!confirm("Remover este título do acervo?")) return;
+      if (supabase && typeof id === 'string' && !id.startsWith("def-") && !id.startsWith("cust-")) {
+        try {
+          await supabase.from('titles').delete().eq('id', id);
+        } catch(e) {}
+      }
+      appState.catalog = appState.catalog.filter(i => i.id !== id);
+      const customOnly = appState.catalog.filter(i => String(i.id).startsWith("cust-"));
+      safeSet("pdflix_saved_catalog", JSON.stringify(customOnly));
+
+      loadAdminTable();
+      renderApp();
+    }
+
+    // INICIALIZAÇÃO COM CONEXÃO NA NUVEM
+    initAuthSession();
+    setupSearchInput();
+    loadCatalogFromCloud();
+  </script>
+</body>
+</html>
